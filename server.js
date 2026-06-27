@@ -29,6 +29,6 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Sunucu çalışıyor: Port ${PORT}`);
 });
