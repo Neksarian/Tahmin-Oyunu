@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tahminim | Sosyal Çıkarım Oyunu</title>
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts & Custom CSS -->
+  <link rel="stylesheet" href="/style.css">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="flex flex-col min-h-screen antialiased">
+
+  <!-- Header / Navbar (Sticky at top) -->
+  <header class="w-full py-4 px-6 border-b border-white/5 backdrop-blur-md bg-black/20 sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-brain text-purple-500 text-2xl animate-pulse-slow"></i>
+        <h1 class="font-extrabold text-xl tracking-wider bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">TAHMİNİM</h1>
+      </div>
+      <!-- Global Game Info Overlay -->
+      <div id="global-game-info" class="hidden flex items-center gap-3">
+        <div class="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 border border-white/10 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span id="header-room-code" class="text-purple-300">ODA: ----</span>
+        </div>
+        <div class="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 border border-white/10">
+          <span id="header-round-info" class="text-slate-300">Tur: - / -</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Container -->
+  <main class="flex-grow flex items-center justify-center p-4 md:p-8 max-w-4xl w-full mx-auto">
+    <div class="w-full">
+      
+      <!-- NOTIFICATION / ERROR POPUP -->
+      <div id="error-toast" class="hidden fixed bottom-6 right-6 left-6 md:left-auto md:w-96 p-4 rounded-xl border border-red-500/20 bg-red-950/80 backdrop-blur-lg shadow-2xl z-50 animate-fade-in">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg"></i>
+          <p id="error-toast-text" class="text-sm text-red-200"></p>
+        </div>
+      </div>
+
+      <!-- SCREEN 1: AUTH (LOGIN / ROOM INITIALIZATION) -->
+      <section id="screen-auth" class="w-full max-w-md mx-auto glass-panel glass-panel-glow-purple rounded-3xl p-6 md:p-8 animate-fade-in">
+        <div class="text-center mb-8">
+          <div class="inline-flex p-4 bg-purple-600/10 border border-purple-500/20 rounded-2xl mb-4">
+            <i class="fa-solid fa-gamepad text-purple-400 text-3xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white tracking-wide">Tahmin Et, Kamufle Ol!</h2>
+          <p class="text-slate-400 text-sm mt-1">Kim kimin Imposter olduğunu bulabilecek mi?</p>
+        </div>
+
+        <div class="space-y-5">
+          <!-- Nickname -->
+          <div>
+            <label for="input-nickname" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Oyuncu Adı</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="input-nickname" maxlength="12" placeholder="Takma adınızı girin" 
+                class="w-full py-3 pl-10 pr-4 rounded-xl text-sm glass-input">
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="relative my-6 text-center">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/5"></div></div>
+            <span class="relative px-3 text-xs uppercase tracking-widest text-slate-500 bg-[#0f051d]">Oda İşlemleri</span>
+          </div>
+
+          <!-- Room Actions tabs -->
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <button id="btn-tab-join" class="py-2.5 rounded-lg text-xs font-bold border border-purple-500/20 bg-purple-500/10 text-purple-300 transition-all">Odaya Katıl</button>
+            <button id="btn-tab-create" class="py-2.5 rounded-lg text-xs font-bold border border-white/5 bg-white/5 text-slate-400 transition-all">Oda Oluştur</button>
+          </div>
+
+          <!-- Join Input -->
+          <div id="join-room-container">
+            <label for="input-room-code" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">4 Haneli Oda Kodu</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+                <i class="fa-solid fa-key"></i>
+              </span>
+              <input type="text" id="input-room-code" maxlength="4" placeholder="Örn: ABCD" 
+                class="w-full py-3 pl-10 pr-4 rounded-xl text-sm glass-input uppercase font-bold tracking-wider">
+            </div>
+            <button id="btn-join-room" class="w-full mt-4 py-3.5 rounded-xl font-bold btn-primary-neon text-white text-sm flex items-center justify-center gap-2">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Odaya Katıl
+            </button>
+          </div>
+
+          <!-- Create Controls -->
+          <div id="create-room-container" class="hidden">
+            <button id="btn-create-room" class="w-full py-3.5 rounded-xl font-bold btn-primary-neon text-white text-sm flex items-center justify-center gap-2">
+              <i class="fa-solid fa-circle-plus"></i> Yeni Oda Oluştur
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: LOBBY -->
+      <section id="screen-lobby" class="hidden w-full max-w-xl mx-auto glass-panel glass-panel-glow-purple rounded-3xl p-6 md:p-8 animate-fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-5 mb-6 gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-400">ODA KODU</span>
+            <div class="flex items-center gap-2 mt-1">
+              <h2 id="lobby-code-display" class="text-3xl font-black text-white tracking-widest">----</h2>
+              <button id="btn-copy-code" class="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white transition-all text-xs" title="Kodu Kopyala">
+                <i class="fa-solid fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-start md:self-auto bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl text-sm text-slate-400">
+            <i class="fa-solid fa-users text-purple-400"></i>
+            <span id="lobby-count-display">0 / 8 Oyuncu</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Player List -->
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Oyuncular</h3>
+            <div id="lobby-players-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+              <!-- Dynamically populated players -->
+            </div>
+          </div>
+
+          <!-- Host Settings -->
+          <div id="host-settings-container" class="space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Oyun Ayarları</h3>
+            
+            <div>
+              <label for="select-rounds" class="block text-xs font-semibold text-slate-400 mb-2">Tur Sayısı</label>
+              <select id="select-rounds" class="w-full py-2.5 px-3 rounded-lg text-sm glass-input">
+                <option value="3" selected>3 Tur</option>
+                <option value="5">5 Tur</option>
+                <option value="7">7 Tur</option>
+                <option value="10">10 Tur</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="select-imposters" class="block text-xs font-semibold text-slate-400 mb-2">Imposter Sayısı</label>
+              <select id="select-imposters" class="w-full py-2.5 px-3 rounded-lg text-sm glass-input">
+                <option value="1" selected>1 Imposter</option>
+                <option value="2">2 Imposter (En az 5 oyuncu)</option>
+              </select>
+            </div>
+
+            <!-- Custom Questions Section -->
+            <div class="border-t border-white/5 pt-3">
+              <button type="button" id="btn-toggle-custom-questions" class="w-full flex items-center justify-between text-xs font-bold text-slate-400 hover:text-white transition-colors">
+                <span><i class="fa-solid fa-file-signature text-purple-400 mr-1.5"></i> Özel Sorular Ekle (Opsiyonel)</span>
+                <i id="custom-questions-chevron" class="fa-solid fa-chevron-down transition-transform"></i>
+              </button>
+
+              <div id="custom-questions-panel" class="hidden mt-3 space-y-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" id="checkbox-use-only-custom" class="w-4.5 h-4.5 rounded accent-purple-500">
+                  <label for="checkbox-use-only-custom" class="text-xs font-semibold text-slate-300 cursor-pointer">Sadece özel soruları kullan</label>
+                </div>
+
+                <div class="space-y-2">
+                  <input type="text" id="input-custom-question-text" placeholder="Örn: Ayakkabı numaranız kaçtır?" class="w-full py-2 px-3 rounded-lg text-xs glass-input">
+                  <input type="text" id="input-custom-question-clue" placeholder="Örn: 30-50 arası bir sayı girin." class="w-full py-2 px-3 rounded-lg text-xs glass-input">
+                  <button type="button" id="btn-add-custom-question" class="w-full py-2 rounded-lg text-xs font-bold bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 transition-colors flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Soru Ekle
+                  </button>
+                </div>
+
+                <div class="border-t border-white/5 pt-2">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Eklenen Sorular</span>
+                    <span id="custom-questions-count" class="text-[10px] font-bold text-purple-400">0 Soru</span>
+                  </div>
+                  <div id="custom-questions-list" class="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                    <p id="custom-questions-empty-text" class="text-[10px] text-slate-500 italic py-1 text-center">Henüz özel soru eklenmedi.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <button id="btn-start-game" class="w-full py-3.5 rounded-xl font-bold btn-primary-neon text-white text-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> Oyunu Başlat
+              </button>
+            </div>
+          </div>
+
+          <!-- Waiting for Host View (Non-hosts only) -->
+          <div id="non-host-wait-container" class="hidden flex flex-col items-center justify-center py-6 text-center">
+            <div class="loader-dots inline-flex relative w-20 h-10">
+              <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+              <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+              <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+              <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+            </div>
+            <p class="text-slate-400 text-sm mt-3">Kurucu ayarları yapıyor, oyunun başlaması bekleniyor...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: QUESTION STAGE -->
+      <section id="screen-question" class="hidden w-full max-w-lg mx-auto glass-panel glass-panel-glow-purple rounded-3xl p-6 md:p-8 animate-fade-in">
+        <!-- Identity Alert -->
+        <div id="role-identity-banner" class="mb-6 p-4 rounded-xl border flex items-center gap-3">
+          <!-- Dynamically customized based on role -->
+        </div>
+
+        <div class="text-center mb-8">
+          <span class="text-xs font-bold uppercase tracking-widest text-purple-400">SORU AŞAMASI</span>
+          
+          <div id="question-card" class="mt-4 p-5 rounded-2xl bg-white/5 border border-white/10">
+            <p id="display-question-text" class="text-lg md:text-xl font-medium leading-relaxed text-white">
+              Soru yükleniyor...
+            </p>
+          </div>
+        </div>
+
+        <!-- Answer Form -->
+        <div id="answer-form-container" class="space-y-4">
+          <div>
+            <label for="input-answer" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Sayısal Cevabınız</label>
+            <input type="number" step="any" id="input-answer" placeholder="Cevabınızı buraya yazın..." 
+              class="w-full py-3.5 px-4 rounded-xl text-center font-bold text-lg tracking-wide glass-input">
+          </div>
+
+          <button id="btn-submit-answer" class="w-full py-3.5 rounded-xl font-bold btn-primary-neon text-white text-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Cevabı Gönder
+          </button>
+        </div>
+
+        <!-- Submitted / Waiting Area -->
+        <div id="answer-waiting-container" class="hidden text-center py-6">
+          <div class="loader-dots inline-flex relative w-20 h-10 mb-2">
+            <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+            <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+            <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+            <div class="absolute w-3 h-3 bg-purple-500 rounded-full"></div>
+          </div>
+          <h3 class="text-lg font-semibold text-white">Cevabınız Alındı!</h3>
+          <p class="text-slate-400 text-sm mt-1">Diğer oyuncuların cevaplaması bekleniyor...</p>
+          
+          <!-- Answered Status Tracker -->
+          <div class="mt-6 border-t border-white/5 pt-4">
+            <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Cevap Durumu</span>
+            <div id="answer-status-list" class="flex flex-wrap gap-2 justify-center mt-3">
+              <!-- Dynamically populated status pills -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: DISCUSSION STAGE -->
+      <section id="screen-discussion" class="hidden w-full max-w-2xl mx-auto glass-panel glass-panel-glow-purple rounded-3xl p-6 md:p-8 animate-fade-in">
+        <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-400">TARTIŞMA AŞAMASI</span>
+            <h2 class="text-xl font-extrabold text-white mt-0.5">Kim Yalan Söylüyor?</h2>
+          </div>
+
+          <!-- Server Timer Widget -->
+          <div class="timer-container flex items-center justify-center">
+            <svg class="timer-svg" width="90" height="90">
+              <circle class="timer-circle-bg" cx="45" cy="45" r="38" />
+              <circle id="discussion-timer-bar" class="timer-circle-val" cx="45" cy="45" r="38" stroke-dasharray="238.76" stroke-dashoffset="0" />
+              <defs>
+                <linearGradient id="timer-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#a855f7" />
+                  <stop offset="100%" stop-color="#6366f1" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center">
+              <span id="discussion-timer-value" class="text-2xl font-bold text-white leading-none">60</span>
+              <span class="text-[9px] uppercase font-bold text-purple-400 tracking-wider">saniye</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-6 p-4 rounded-xl bg-purple-950/20 border border-purple-500/10">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400 block mb-1">ASIL SORU</span>
+          <p id="discussion-real-question" class="text-sm font-semibold text-white leading-relaxed">
+            -
+          </p>
+        </div>
+
+        <!-- Answers Grid -->
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Oyuncuların Cevapları</h3>
+        <div id="discussion-answers-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          <!-- Dynamically populated answer cards -->
+        </div>
+
+        <div class="p-3 bg-white/5 border border-white/10 rounded-xl flex items-start gap-2.5 text-xs text-slate-400">
+          <i class="fa-solid fa-circle-info text-purple-400 mt-0.5"></i>
+          <p>Herkesin cevabı yukarıda listelenmiştir. Imposter soruyu görmedi, sadece sayısal bir aralık ipucu aldı! Cevaplardaki tutarsızlıklara göre Imposter'ı bulmaya çalışın.</p>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: VOTING STAGE -->
+      <section id="screen-voting" class="hidden w-full max-w-lg mx-auto glass-panel glass-panel-glow-purple rounded-3xl p-6 md:p-8 animate-fade-in">
+        <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-red-400">OYLAMA AŞAMASI</span>
+            <h2 class="text-xl font-extrabold text-white mt-0.5">Oyunu Kullan!</h2>
+          </div>
+
+          <!-- Timer -->
+          <div class="timer-container flex items-center justify-center">
+            <svg class="timer-svg" width="90" height="90">
+              <circle class="timer-circle-bg" cx="45" cy="45" r="38" />
+              <circle id="voting-timer-bar" class="timer-circle-val" cx="45" cy="45" r="38" stroke-dasharray="238.76" stroke-dashoffset="0" />
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center">
+              <span id="voting-timer-value" class="text-2xl font-bold text-white leading-none">30</span>
+              <span class="text-[9px] uppercase font-bold text-red-400 tracking-wider">saniye</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dead warning or active state -->
+        <div id="voter-status-alert" class="mb-6 hidden">
+          <!-- Will show custom message if player is eliminated -->
+        </div>
+
+        <!-- Voting list -->
+        <div id="voting-choices-container" class="space-y-3">
+          <!-- Dynamically populated buttons of alive players -->
+        </div>
+
+        <!-- Voting Waiting State (shown after user votes) -->
+        <div id="vote-waiting-area" class="hidden text-center py-6">
+          <div class="loader-dots inline-flex relative w-20 h-10 mb-2">
+            <div class="absolute w-3 h-3 bg-red-500 rounded-full"></div>
+            <div class="absolute w-3 h-3 bg-red-500 rounded-full"></div>
+            <div class="absolute w-3 h-3 bg-red-500 rounded-full"></div>
+            <div class="absolute w-3 h-3 bg-red-500 rounded-full"></div>
+          </div>
+          <h3 class="text-lg font-semibold text-white">Oyunuz Kaydedildi!</h3>
+          <p class="text-slate-400 text-sm mt-1">Diğer oyuncuların oylamayı tamamlaması bekleniyor...</p>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: RESULTS STAGE -->
+      <section id="screen-results" class="hidden w-full max-w-xl mx-auto glass-panel rounded-3xl p-6 md:p-8 animate-fade-in">
+        <!-- Result Announcement Header (Dynamic color border) -->
+        <div id="results-announcement" class="text-center py-6 rounded-2xl mb-6">
+          <!-- Dynamically populated header e.g. "Imposter Elendi!" or "Masum Elendi!" -->
+        </div>
+
+        <!-- Voting breakdowns -->
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Oylama Dağılımı</h3>
+        <div id="results-vote-breakdown" class="space-y-2 mb-6">
+          <!-- Dynamically populated vote count list -->
+        </div>
+
+        <!-- Scores / Leaderboard -->
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Puan Tablosu</h3>
+        <div id="results-scores-list" class="space-y-2 mb-8">
+          <!-- Dynamically populated scores list -->
+        </div>
+
+        <!-- Host next controls -->
+        <div id="results-host-controls" class="hidden space-y-3">
+          <button id="btn-next-round" class="w-full py-3.5 rounded-xl font-bold btn-primary-neon text-white text-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-chevron-right"></i> Sonraki Tur
+          </button>
+        </div>
+        <div id="results-nonhost-waiting" class="hidden text-center py-4 text-sm text-slate-400">
+          <i class="fa-solid fa-spinner animate-spin text-purple-500 mr-2"></i> Oda sahibinin sonraki tura geçmesi bekleniyor...
+        </div>
+      </section>
+
+      <!-- SCREEN 7: GAME OVER -->
+      <section id="screen-ended" class="hidden w-full max-w-lg mx-auto glass-panel glass-panel-glow-emerald rounded-3xl p-6 md:p-8 animate-fade-in">
+        <div class="text-center mb-8">
+          <div class="inline-flex p-4 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl mb-4">
+            <i class="fa-solid fa-trophy text-amber-400 text-3xl"></i>
+          </div>
+          <h2 class="text-3xl font-black text-white tracking-wide">Oyun Bitti!</h2>
+          <p class="text-slate-400 text-sm mt-1">Nefes kesen mücadelenin sonu.</p>
+        </div>
+
+        <!-- Winners box -->
+        <div class="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 text-center mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">KAZANANLAR</span>
+          <h3 id="display-game-winners" class="text-2xl font-extrabold text-white mt-1">
+            -
+          </h3>
+        </div>
+
+        <!-- Special Achievements -->
+        <div id="game-achievements-box" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div class="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/25 text-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-400">🕵️‍♂️ En İyi Dedektif</span>
+            <h4 id="achievement-detective-name" class="text-lg font-extrabold text-white mt-1">-</h4>
+            <p id="achievement-detective-rate" class="text-xs text-slate-400 mt-1">%0 Doğruluk Oranı</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-red-950/20 border border-red-500/25 text-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-red-400">🎭 En İyi Imposter</span>
+            <h4 id="achievement-imposter-name" class="text-lg font-extrabold text-white mt-1">-</h4>
+            <p id="achievement-imposter-rate" class="text-xs text-slate-400 mt-1">%0 Başarı Oranı</p>
+          </div>
+        </div>
+
+        <!-- Final Rankings -->
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Final Sıralaması</h3>
+        <div id="final-leaderboard" class="space-y-2 mb-8">
+          <!-- Dynamically populated rankings -->
+        </div>
+
+        <!-- Host reset options -->
+        <div id="ended-host-controls" class="hidden space-y-3">
+          <button id="btn-restart-lobby" class="w-full py-3.5 rounded-xl font-bold btn-primary-neon text-white text-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-left"></i> Lobiye Geri Dön (Sıfırla)
+          </button>
+        </div>
+        <div id="ended-nonhost-waiting" class="hidden text-center py-4 text-sm text-slate-400">
+          <i class="fa-solid fa-spinner animate-spin text-purple-500 mr-2"></i> Lobiye dönüş için oda sahibi bekleniyor...
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-4 text-center border-t border-white/5 mt-auto bg-black/10">
+    <p class="text-xs text-slate-500">Tahminim &copy; 2026 - Gelişmiş Sosyal Çıkarım Oyunu</p>
+  </footer>
+
+  <!-- Socket.IO and Main Script -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
